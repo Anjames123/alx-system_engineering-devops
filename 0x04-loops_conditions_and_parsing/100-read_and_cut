@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Write a Bash script that displays the content of the file /etc/passwd
+
+while IFS=':' read -r username password uid gid gecos home shell
+do
+	echo "$username:$uid:$home"
+done < /etc/passwd
