@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Write a Bash script that displays the PID, along with the process name, of processes whose name contain the word bash.
+
+current_pid=$$
+
+process_list=$(pgrep -a bash)
+
+while IFS= read -r process; do
+	pid=$(echo "$process" | awk '{print $1}')
+	name=$(echo "$process" | awk '{print $2}')
+	if [[ "$name" == *"bash"* ]]; then
+		echo "$pid $name"
+	fi
+done <<< "$process_list"
