@@ -2,7 +2,8 @@
 # Write a Bash script that displays the PID, along with the process name, of processes whose name contain the word bash.
 
 for pid in /proc/[0-9]*/cmdline; do
-	if grep -q '\bbash\b' "$pid"; then
+	if grep -q '\bbash\b' "$pid"
+	then
 		pid_number=$(echo "$pid" | awk -F'/' '{print $3}')
 		process_name=$(tr '\0' ' ' < "$pid" | awk '{print $1}')
 		echo "$pid_number $process_name"
