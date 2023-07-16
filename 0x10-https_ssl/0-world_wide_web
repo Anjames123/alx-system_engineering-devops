@@ -1,20 +1,32 @@
 #!/usr/bin/env bash
-# A script that display information about subdomains
 
-# Funtion
+# Function to display subdomain information
 subdomain_details() {
-    script=$(dig "$2"."$1" | grep -A1 'ANSWER SECTION:' | tr '\t' '\n' | tail -2 | tr '\n' ' ')
-    echo "$2 $script" | awk '{print "The subdomain " $1 " is a " $2 " record and points to " $3}'
+    domain="$1"
+    subdomain="$2"
+
+    # Perform DNS lookup using dig and extract the ANSWER SECTION using awk
+    dig_output=$(dig "$subdomain.$domain" | awk '/ANSWER SECTION:/ {getline; print}')
+
+    # Extract the record type and destination IP using awk
+    record_type=$(echo "$dig_output" | awk '{print $4}')
+    destination=$(echo "$dig_output" | awk '{print $5}')
+
+    # Display the subdomain information
+    echo "The subdomain $subdomain is a $record_type record and points to $destination"
 }
 
-# Condition
-if [ $# == 1 ]; then
+# Main script logic
+if [ $# -eq 1 ]; then
+    # Display information for default subdomains: www, lb-01, web-01, web-02
     subdomain_details "$1" "www"
     subdomain_details "$1" "lb-01"
     subdomain_details "$1" "web-01"
     subdomain_details "$1" "web-02"
-
-elif [ $# == 2 ]; then 
-    
+elif [ $# -eq 2 ]; then
+    # Display information for the specified subdomain
     subdomain_details "$1" "$2"
+else
+    echo "Usage: $0 <domain> [subdomain]"
+    exit 1
 fi
