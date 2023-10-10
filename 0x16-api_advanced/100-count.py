@@ -25,9 +25,6 @@ def count_words(subreddit, word_list, after='start', words_count=None):
 
     Returns
     int: 1 valid subreddit or 0 for invalid subreddit
-
-    NOTE:
-    The function prints the count result internally
     """
     import requests
 
