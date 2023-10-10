@@ -1,30 +1,49 @@
 #!/usr/bin/python3
 """Function to query a list of all hot posts on a given Reddit subreddit."""
+
 import requests
 
+def recurse(subreddit, hot_list=None, after=None):
+    """
+    Returns a list of titles of all hot posts on a given subreddit.
+    
+    :param subreddit: The name of the subreddit to query.
+    :param hot_list: A list to store the titles of hot posts.
+    :param after: A token to specify the starting point for pagination.
+    :return: List of post titles or None if subreddit is invalid or no results found.
+    """
+    if hot_list is None:
+        hot_list = []
 
-def recurse(subreddit, hot_list=[], after="", count=0):
-    """Returns a list of titles of all hot posts on a given subreddit."""
-    url = "https://www.reddit.com/r/{}/hot/.json".format(subreddit)
+    base_url = f'https://www.reddit.com/r/{subreddit}/hot.json'
+    params = {'limit': 100, 'after': after}
+
     headers = {
-        "User-Agent": "linux:0x16.api.advanced:v1.0.0 (by /u/bdov_)"
+        'User-Agent': 'MyAPI/1.0 (by /u/bdov_)'
     }
-    params = {
-        "after": after,
-        "count": count,
-        "limit": 100
-    }
-    response = requests.get(url, headers=headers, params=params,
-                            allow_redirects=False)
+
+    response = requests.get(base_url, headers=headers, params=params, allow_redirects=False)
+
     if response.status_code == 404:
         return None
 
     results = response.json().get("data")
     after = results.get("after")
-    count += results.get("dist")
-    for c in results.get("children"):
-        hot_list.append(c.get("data").get("title"))
+    for post in results.get("children"):
+        hot_list.append(post.get("data").get("title"))
 
     if after is not None:
-        return recurse(subreddit, hot_list, after, count)
+        return recurse(subreddit, hot_list, after)
     return hot_list
+
+if __name__ == '__main__':
+    import sys
+    if len(sys.argv) < 2:
+        print("Please pass an argument for the subreddit to search.")
+    else:
+        subreddit = sys.argv[1]
+        result = recurse(subreddit)
+        if result is not None:
+            print(len(result))
+        else:
+            print("None")
