@@ -1,60 +1,71 @@
 #!/usr/bin/python3
-"""Recursive function to query the Reddit API and count keyword occurrences in hot articles."""
+"""
+This script defines a function to print a sorted count of given keywords
+present inside a given subreddit using recursion
+"""
 
-import requests
 
-def count_words(subreddit, word_list, after=None, counts=None):
+def count_words(subreddit, word_list, after='start', words_count=None):
     """
-    Recursively counts keyword occurrences in hot articles' titles from a given subreddit.
+    Prints sorted count of given words present in subreddit's hot titles
+    using the reddit API
 
-    :param subreddit: The name of the subreddit to query.
-    :param word_list: A list of keywords to count.
-    :param after: A token to specify the starting point for pagination.
-    :param counts: A dictionary to store the counts of each keyword.
+    Example:
+    >>> words_list = ["react", "python", "java"]
+    >>> count("programming", words_list)
+    java: 27
+    python: 17
+    react: 17
+
+    Args:
+    subreddit (str): The subreddit to be searched for
+    word_list (list): List of keywords to count
+    after (str): Index to keep tack of remaining pages `NOT TO BE CHANGED`
+    words_count (dict): Keep track of word's count `NOT TO BE CHANGED`
+
+    Returns
+    int: 1 valid subreddit or 0 for invalid subreddit
+
+    NOTE:
+    The function prints the count result internally
     """
-    if counts is None:
-        counts = {}
+    import requests
 
     if not word_list:
-        # Sort and print the counts
-        sorted_counts = sorted(counts.items(), key=lambda x: (-x[1], x[0]))
-        for word, count in sorted_counts:
-            print(f"{word.lower()}: {count}")
-        return
+        return 0
 
-    if not subreddit:
-        print("Invalid subreddit or no posts match.")
-        return
+    if words_count is None:
+        words_count = {word: 0 for word in word_list}
 
-    base_url = f'https://www.reddit.com/r/{subreddit}/hot.json'
-    params = {'limit': 100, 'after': after}
+    url = "https://www.reddit.com/r/{}/hot.json".format(subreddit)
+    headers = {"user-agent": "Fake-Agent"}
+    if after != 'start':
+        url += "?after={}".format(after)
 
-    headers = {'User-Agent': 'MyAPI/1.0 (by /u/bdov_)'}
+    response = requests.get(url, headers=headers, allow_redirects=False)
+    if response.status_code != 200:
+        return 0
 
-    response = requests.get(base_url, headers=headers, params=params, allow_redirects=False)
+    for post in response.json().get('data').get('children'):
+        title = post.get('data').get('title')
+        for word in title.split():
+            if word in words_count.keys():
+                words_count[word] += 1
 
-    if response.status_code == 404:
-        print(f"Invalid subreddit: {subreddit}")
-        return
-
-    data = response.json().get("data")
-    after = data.get("after")
-
-    for post in data.get("children"):
-        title = post.get("data").get("title").lower()
-        for word in word_list:
-            if title.count(f" {word.lower()} ") > 0:
-                counts[word] = counts.get(word, 0) + title.count(f" {word.lower()} ")
-
-    count_words(subreddit, word_list, after, counts)
-
-if __name__ == '__main__':
-    import sys
-
-    if len(sys.argv) < 3:
-        print("Usage: {} <subreddit> <list of keywords>".format(sys.argv[0]))
-        print("Ex: {} programming 'python java javascript'".format(sys.argv[0]))
+    after = response.json().get('data').get('after')
+    if after:
+        return count_words(subreddit, word_list, after, words_count)
     else:
-        subreddit = sys.argv[1]
-        word_list = [x.lower() for x in sys.argv[2].split()]
-        count_words(subreddit, word_list)
+        words_count = dict(sorted(words_count.items(),
+                                  key=lambda x: x[1], reverse=True))
+        copy = dict()
+        for word, count in words_count.items():
+            if word.lower() in copy.keys():
+                copy[word.lower()] += count
+            else:
+                copy[word.lower()] = words_count[word]
+
+        for word, count in copy.items():
+            if count != 0:
+                print(str(word) + ": " + str(count))
+        return 1
