@@ -4,13 +4,7 @@
 import requests
 
 def recurse(subreddit, hot_list=None, after=None):
-    """
-    Returns a list of titles of all hot posts on a given subreddit.
-    
-    :param subreddit: The name of the subreddit to query.
-    :param hot_list: A list to store the titles of hot posts.
-    :param after: A token to specify the starting point for pagination.
-    :return: List of post titles or None if subreddit is invalid or no results found.
+    """ Returns a list of titles of all hot posts on a given subreddit.
     """
     if hot_list is None:
         hot_list = []
